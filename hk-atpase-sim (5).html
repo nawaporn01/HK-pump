@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F0F4F5">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="H+/K+ ATPase">
+<title>H⁺/K⁺ ATPase — ซิมูเลชันปั๊มโปรตอนของเซลล์พาไรเอทัล</title>
+<style>
+  :root{
+    --lumen:#FDF1DE;
+    --cyto:#DFEFEC;
+    --ink:#22363F;
+    --ink-soft:#5B7078;
+    --line:#CBD8DC;
+    --card:#FFFFFF;
+    --h:#E23B2E;
+    --k:#6C4BC7;
+    --atp:#F0A32E;
+    --pump:#1F9E8F;
+    --chan:#3D7FC1;
+    --drug:#8E44AD;
+    --bg:#F0F4F5;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Sarabun","Noto Sans Thai","Leelawadee UI",Tahoma,system-ui,-apple-system,sans-serif;
+    font-size:15px;
+    line-height:1.55;
+    padding:18px;
+    padding-left:max(18px, env(safe-area-inset-left));
+    padding-right:max(18px, env(safe-area-inset-right));
+    overscroll-behavior-y:contain;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .app{max-width:1440px;margin:0 auto}
+  header{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 14px;margin-bottom:14px}
+  h1{font-size:22px;font-weight:700;margin:0;letter-spacing:-.2px}
+  header .sub{color:var(--ink-soft);font-size:13.5px}
+
+  main{display:grid;grid-template-columns:272px minmax(0,1fr) 322px;gap:14px;align-items:start}
+  @media (max-width:1280px){
+    main{grid-template-columns:minmax(0,1fr) 310px}
+    .stage{grid-column:1;grid-row:1}
+    .panel-right{grid-column:2;grid-row:1 / span 2}
+    .panel-left{grid-column:1;grid-row:2}
+  }
+  @media (max-width:900px){
+    main{grid-template-columns:minmax(0,1fr)}
+    .stage,.panel-left,.panel-right{grid-column:1;grid-row:auto}
+    .stage{order:1} .panel-left{order:2} .panel-right{order:3}
+  }
+
+  .stage{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:8px;box-shadow:0 1px 0 rgba(20,50,60,.06);
+  }
+  .canvas-wrap{position:relative;width:100%;aspect-ratio:900/560;border-radius:10px;overflow:hidden}
+  canvas#stage{display:block;width:100%;height:100%;touch-action:manipulation;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+
+  .hint{position:absolute;left:0;right:0;bottom:13%;text-align:center;pointer-events:none;
+    color:#3E6F73;font-weight:700;font-size:16px;line-height:1.5;display:none;padding:0 16px}
+  .hint span{display:inline-block;font-weight:500;font-size:13.5px;color:#5E8286;margin-top:2px}
+  .hint.show{display:block}
+
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 4px 2px}
+  button{
+    font:inherit;font-size:14px;color:var(--ink);background:#fff;
+    border:1.5px solid var(--line);border-radius:9px;padding:7px 13px;cursor:pointer;
+    touch-action:manipulation;-webkit-user-select:none;user-select:none;
+  }
+  @media (hover:hover){
+    button:hover{background:#F3F8F9;border-color:#A9BEC4}
+    button.primary:hover{background:#188C7F}
+  }
+  button:focus-visible{outline:3px solid #7FC6BD;outline-offset:2px}
+  button.primary{background:var(--pump);border-color:#17877A;color:#fff;font-weight:600;min-width:104px}
+  button.pill{border-radius:999px;padding:5px 12px;font-size:13px}
+  button.pill[aria-pressed="true"]{background:#E2F3F0;border-color:var(--pump);color:#116156;font-weight:600}
+
+  .panel{display:flex;flex-direction:column;gap:12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 14px}
+  .card h2{font-size:14px;margin:0 0 10px;font-weight:700;color:var(--ink)}
+  .row{margin-bottom:12px}
+  .row:last-child{margin-bottom:0}
+  .row label{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;color:var(--ink-soft);margin-bottom:3px}
+  .row label b{color:var(--ink);font-variant-numeric:tabular-nums}
+  input[type=range]{width:100%;accent-color:var(--pump);margin:0}
+  .row small{display:block;color:var(--ink-soft);font-size:11.5px;line-height:1.4;margin-top:3px}
+  .check{display:flex;align-items:flex-start;gap:9px;font-size:13.5px;margin-bottom:9px;cursor:pointer}
+  .check:last-child{margin-bottom:0}
+  .check input{margin-top:3px;accent-color:var(--pump);width:16px;height:16px}
+  .check small{display:block;color:var(--ink-soft);font-size:12px;line-height:1.4}
+
+  .ph-readout{display:flex;align-items:baseline;gap:8px}
+  .ph-val{font-size:40px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+  .ph-note{font-size:12.5px;color:var(--ink-soft)}
+  .ph-scale{position:relative;height:12px;border-radius:6px;margin:10px 0 4px;
+    background:linear-gradient(90deg,#C62828,#EF6C00,#F9A825,#9CCC65,#43A047)}
+  .ph-marker{position:absolute;top:-4px;width:4px;height:20px;border-radius:2px;background:#22363F;
+    box-shadow:0 0 0 2px #fff;transition:left .2s linear}
+  .ph-ticks{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-soft)}
+  #phchart{width:100%;height:74px;display:block;margin-top:8px;border:1px solid var(--line);border-radius:8px;background:#fff}
+
+  .bars{display:grid;gap:7px}
+  .bar-row{display:grid;grid-template-columns:74px 1fr 34px;align-items:center;gap:8px;font-size:12.5px}
+  .bar-track{height:11px;background:#EEF3F4;border-radius:6px;overflow:hidden}
+  .bar-fill{height:100%;width:0;border-radius:6px;transition:width .18s linear}
+  .bar-row span:last-child{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-soft)}
+
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;font-size:12.5px;color:var(--ink-soft)}
+  .stats div b{display:block;font-size:18px;color:var(--ink);font-variant-numeric:tabular-nums}
+
+  .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--ink-soft);padding:8px 6px 2px}
+  .legend i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+  .legend i.tri{border-radius:0;width:13px;height:12px;clip-path:polygon(50% 0,100% 100%,0 100%)}
+  .legend i.sq{border-radius:3px;width:16px;height:10px}
+
+  .alert{margin-top:10px;font-size:13px;border-radius:10px;padding:8px 11px;
+    background:#FCEFE9;border:1px solid #EFC4B4;color:#8C3B22;display:none}
+  .alert.show{display:block}
+
+  details.about{margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 15px}
+  details.about summary{cursor:pointer;font-weight:700;font-size:14px}
+  details.about h3{font-size:13.5px;margin:14px 0 5px}
+  details.about p,details.about li{font-size:13.5px;color:#3C535C;max-width:74ch}
+  details.about ol,details.about ul{padding-left:20px;margin:4px 0}
+  footer{color:var(--ink-soft);font-size:12px;margin:14px 2px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  /* แท็บเล็ตและหน้าจอสัมผัส: ขยายพื้นที่กดให้นิ้วใช้ได้สบาย */
+  @media (pointer:coarse){
+    button{min-height:44px;padding:10px 16px;font-size:15px}
+    button.pill{min-height:42px;padding:8px 16px;font-size:14px}
+    input[type=range]{height:42px;touch-action:none}
+    .check{margin-bottom:14px;font-size:14.5px}
+    .check input{width:22px;height:22px;margin-top:2px}
+    .row label{font-size:14.5px}
+    .toolbar{gap:10px}
+    details.about summary{padding:6px 0}
+  }
+  @media (max-width:820px){
+    body{padding:10px;padding-left:max(10px, env(safe-area-inset-left));padding-right:max(10px, env(safe-area-inset-right))}
+    h1{font-size:20px}
+    main{gap:10px}
+  }
+
+  /* โหมดเต็มจอสำหรับฉายในห้องเรียน */
+  .stage:fullscreen{background:var(--card);padding:14px;display:flex;flex-direction:column;justify-content:center}
+  .stage:fullscreen .canvas-wrap{height:min(80vh, calc(100vw*0.62));width:auto;margin:0 auto;aspect-ratio:900/560}
+  .stage:-webkit-full-screen{background:var(--card);padding:14px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>ปั๊ม H⁺/K⁺ ATPase</h1>
+    <span class="sub">เยื่อหุ้มด้านลูเมนของเซลล์พาไรเอทัล — แลก H⁺ ออกกับ K⁺ เข้า โดยใช้พลังงานจาก ATP</span>
+  </header>
+
+  <main>
+    <aside class="panel panel-left">
+      <div class="card">
+        <h2>ปริมาณไอออน</h2>
+        <div class="row">
+          <label>H⁺ ในไซโทพลาซึม <b id="vCH">0</b></label>
+          <input type="range" id="sCH" min="0" max="40" step="1" value="0">
+          <small>ระดับที่คาร์บอนิกแอนไฮเดรสเติมกลับให้เสมอ ถือเป็นแหล่งป้อน H⁺ ของปั๊ม</small>
+        </div>
+        <div class="row">
+          <label>H⁺ ในลูเมน <b id="vLH">0</b></label>
+          <input type="range" id="sLH" min="0" max="70" step="1" value="0">
+          <small>เลื่อนเพื่อเติมหรือชะกรดออกเอง เมื่อปล่อยมือ ตัวเลื่อนจะขยับตามค่าจริงในลูเมน</small>
+        </div>
+        <div class="row">
+          <label>K⁺ ทั้งหมดในระบบ <b id="vK">0</b></label>
+          <input type="range" id="sK" min="0" max="100" step="1" value="0">
+          <small>เพิ่มหรือลดพร้อมกันทั้งในเซลล์และในลูเมนกระเพาะ K⁺ ไม่ถูกสร้างหรือทำลาย มีแต่วนไปมาระหว่างสองฝั่ง</small>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>จำนวนไอออนที่นับได้</h2>
+        <div class="bars">
+          <div class="bar-row"><span>H⁺ ลูเมน</span><div class="bar-track"><div class="bar-fill" id="bLH" style="background:#E23B2E"></div></div><span id="nLH">0</span></div>
+          <div class="bar-row"><span>H⁺ ไซโทพลาซึม</span><div class="bar-track"><div class="bar-fill" id="bCH" style="background:#F08279"></div></div><span id="nCH">0</span></div>
+          <div class="bar-row"><span>K⁺ ลูเมน</span><div class="bar-track"><div class="bar-fill" id="bLK" style="background:#6C4BC7"></div></div><span id="nLK">0</span></div>
+          <div class="bar-row"><span>K⁺ ไซโทพลาซึม</span><div class="bar-track"><div class="bar-fill" id="bCK" style="background:#A38FE0"></div></div><span id="nCK">0</span></div>
+        </div>
+        <div class="stats" style="margin-top:12px">
+          <div><b id="sRate">0.0</b>H⁺ ที่ปั๊มออกต่อวินาที</div>
+          <div><b id="sAtpUsed">0</b>ATP ที่ใช้ไปทั้งหมด</div>
+          <div><b id="sTotal">0</b>H⁺ ที่ปั๊มออกสะสม</div>
+          <div><b id="sBlocked">0</b>ปั๊มที่ถูกยาจับ</div>
+        </div>
+      </div>
+    </aside>
+
+    <section class="stage">
+      <div class="canvas-wrap">
+        <canvas id="stage"></canvas>
+        <div class="hint" id="hint">เยื่อหุ้มเซลล์ยังว่างเปล่า<br><span>ลองเพิ่มปั๊ม ช่อง K⁺ และไอออน จากแผงควบคุมสองข้างดู</span></div>
+      </div>
+      <div class="toolbar">
+        <button id="play" class="primary">หยุดชั่วคราว</button>
+        <button id="step">เดินทีละก้าว</button>
+        <button id="reset">เริ่มใหม่</button>
+        <button id="fs" hidden>เต็มจอ</button>
+        <span style="width:10px"></span>
+        <button class="pill" data-preset="empty">เริ่มจากศูนย์</button>
+        <button class="pill" data-preset="normal">สภาวะปกติ</button>
+        <button class="pill" data-preset="nok">ปิดช่อง K⁺</button>
+        <button class="pill" data-preset="ppi">ให้ยา PPI</button>
+        <button class="pill" data-preset="noatp">ตัด ATP</button>
+      </div>
+      <div class="legend">
+        <span><i style="background:#E23B2E"></i>H⁺ วงกลม</span>
+        <span><i class="tri" style="background:#6C4BC7"></i>K⁺ สามเหลี่ยม</span>
+        <span><i class="sq" style="background:#F0A32E"></i>ATP</span>
+        <span><i style="background:#1F9E8F"></i>H⁺/K⁺ ATPase</span>
+        <span><i style="background:#3D7FC1"></i>ช่อง K⁺ (KCNQ1/KCNE2)</span>
+        <span><i style="background:#8E44AD"></i>ยากลุ่ม PPI</span>
+      </div>
+    </section>
+
+    <aside class="panel panel-right">
+      <div class="card">
+        <h2>ความเป็นกรดในลูเมนกระเพาะ</h2>
+        <div class="ph-readout"><span class="ph-val" id="phVal">7.0</span><span class="ph-note" id="phNote">เทียบเท่าน้ำย่อยจาง</span></div>
+        <div class="ph-scale"><div class="ph-marker" id="phMark" style="left:100%"></div></div>
+        <div class="ph-ticks"><span>pH 1</span><span>4</span><span>7</span></div>
+        <canvas id="phchart" width="560" height="185"></canvas>
+        <div class="alert" id="alert"></div>
+      </div>
+
+      <div class="card">
+        <h2>ตัวควบคุม</h2>
+        <div class="row">
+          <label>จำนวนปั๊ม H⁺/K⁺ ATPase <b id="vPumps">0</b></label>
+          <input type="range" id="sPumps" min="0" max="5" step="1" value="0">
+        </div>
+        <div class="row">
+          <label>จำนวนช่อง K⁺ <b id="vChans">0</b></label>
+          <input type="range" id="sChans" min="0" max="4" step="1" value="0">
+        </div>
+        <div class="row">
+          <label>ปริมาณ ATP ในไซโทพลาซึม <b id="vAtp">0%</b></label>
+          <input type="range" id="sAtp" min="0" max="100" step="5" value="0">
+        </div>
+        <div class="row">
+          <label>ขนาดยา PPI (โอเมพราโซล) <b id="vPpi">0%</b></label>
+          <input type="range" id="sPpi" min="0" max="100" step="5" value="0">
+        </div>
+        <div class="row">
+          <label>ความเร็วการจำลอง <b id="vSpeed">1.0×</b></label>
+          <input type="range" id="sSpeed" min="25" max="250" step="5" value="100">
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>ตัวเลือกเพิ่มเติม</h2>
+        <label class="check"><input type="checkbox" id="cCA" checked>
+          <span>คาร์บอนิกแอนไฮเดรสเติม H⁺
+            <small>CO₂ + H₂O → H⁺ + HCO₃⁻ ทำให้ไซโทพลาซึมมี H⁺ ป้อนปั๊มตลอดเวลา</small></span></label>
+        <label class="check"><input type="checkbox" id="cWash" checked>
+          <span>กรดถูกชะออกจากลูเมน
+            <small>เมือกและการบีบตัวของกระเพาะพากรดออกไป ทำให้เกิดสมดุลแทนที่จะกรดสะสมไม่สิ้นสุด</small></span></label>
+        <label class="check"><input type="checkbox" id="cLabels" checked>
+          <span>แสดงป้าย E1 / E2 บนปั๊ม</span></label>
+      </div>
+
+    </aside>
+  </main>
+
+  <details class="about">
+    <summary>วิธีอ่านภาพ และสิ่งที่ควรสังเกต</summary>
+
+    <h3>วัฏจักรของปั๊ม (P-type ATPase, E1 ↔ E2)</h3>
+    <ol>
+      <li><b>E1</b> — ช่องเปิดเข้าหาไซโทพลาซึม จับ H⁺ หนึ่งตัว</li>
+      <li><b>ATP เข้าเกาะ</b> — โมเลกุล ATP ลอยเข้ามาเกาะที่โดเมนซึ่งยื่นอยู่ในไซโทพลาซึม (ช่องประจุ่ม ๆ ที่กะพริบรออยู่)</li>
+      <li><b>การเติมหมู่ฟอสเฟต</b> — ATP แตกเป็น ADP ที่ลอยจากไป กับหมู่ฟอสเฟตที่วิ่งเข้าไปเกาะกรดแอสปาร์ติกในแกนโปรตีน กลายเป็น E1-P</li>
+      <li><b>E1-P → E2-P</b> — พลังงานจากฟอสเฟตทำให้โปรตีนบิดตัว โดเมนในไซโทพลาซึมเอียงไปอีกทาง ช่องหันออกสู่ลูเมน แล้วปล่อย H⁺ ทิ้ง</li>
+      <li><b>E2-P</b> — จับ K⁺ หนึ่งตัวจากลูเมน แล้วปลดฟอสเฟตออกเป็น Pi</li>
+      <li><b>E2 → E1</b> — พอไม่มีฟอสเฟต โปรตีนก็บิดกลับรูปเดิม ปล่อย K⁺ เข้าไซโทพลาซึม แล้วเริ่มรอบใหม่</li>
+    </ol>
+    <p>ในซิมูเลชันนี้ใช้อัตราส่วน 1 H⁺ ต่อ 1 K⁺ ต่อ ATP หนึ่งโมเลกุล ประจุบวกเข้าออกเท่ากันจึงไม่มีประจุสุทธิข้ามเยื่อ (electroneutral) ต่างจาก Na⁺/K⁺ ATPase ที่แลก 3 ต่อ 2 แล้วสร้างประจุสุทธิ ในของจริงอัตราส่วนขึ้นกับความชันของ H⁺ คือเป็น 2:2 ตอนกรดยังน้อย แล้วลดเหลือ 1:1 เมื่อลูเมนเป็นกรดจัด เพราะ ATP หนึ่งโมเลกุลให้พลังงานไม่พอจะดัน H⁺ สองตัวสวนความชันขนาดนั้น</p>
+
+    <h3>ความจำเพาะ: ทำไมปั๊มถึงเลือกไอออนถูกตัว</h3>
+    <p>H⁺ วาดเป็นวงกลม K⁺ วาดเป็นสามเหลี่ยม ช่องจับภายในปั๊มวาดเป็นเส้นประที่เปลี่ยนรูปตามสถานะ: ตอน E1 ช่องเป็นวงกลมจึงรับได้เฉพาะ H⁺ พอเติมฟอสเฟตแล้วพลิกเป็น E2 ช่องกลายเป็นสามเหลี่ยมจึงรับได้เฉพาะ K⁺ ลองดูจังหวะที่ไอออนผิดชนิดลอยเข้าไปใกล้ปาก มันจะถูกดีดกลับพร้อมเส้นประกะพริบสีแดง ช่อง K⁺ ก็มีตัวกรองรูปสามเหลี่ยมเช่นกัน H⁺ จึงรั่วผ่านช่องนั้นไม่ได้</p>
+    <p>รูปร่างในภาพเป็นอุปมาเท่านั้น ของจริงความจำเพาะมาจากขนาดของไอออนกับตำแหน่งของหมู่ที่มีประจุลบในโพรงจับ ซึ่งจัดเรียงพอดีกับไอออนชนิดหนึ่งและไม่พอดีกับอีกชนิด การเปลี่ยนรูปร่างของโปรตีนจึงเปลี่ยนทั้งทิศทางที่ช่องเปิดและชนิดไอออนที่จับได้ในคราวเดียว</p>
+
+    <h3>ภารกิจสำรวจ: เริ่มจากเยื่อเปล่า ๆ</h3>
+    <p>เปิดมาครั้งแรกจะมีแค่เยื่อหุ้มเซลล์ ลูเมนกระเพาะด้านบน และไซโทพลาซึมด้านล่าง ทุกอย่างที่เหลือให้ค่อย ๆ ใส่เข้าไปเอง แล้วสังเกตว่าอะไรเกิดขึ้น</p>
+    <ol>
+      <li>ใส่ H⁺ ลงในไซโทพลาซึมอย่างเดียวก่อน มันข้ามเยื่อไปเองได้ไหม</li>
+      <li>เพิ่มปั๊มหนึ่งตัว ปั๊มจับ H⁺ ได้ แต่ทำไมถึงค้างอยู่แค่นั้น ยังขาดอะไร</li>
+      <li>เพิ่ม ATP แล้วดูจนครบรอบ ต้องใส่อะไรอีกอย่างปั๊มถึงจะหมุนรอบต่อไปได้</li>
+      <li>ใส่ K⁺ แล้วปิดช่อง K⁺ ไว้ก่อน ปั๊มเดินได้กี่รอบก่อนจะติด แล้วลองเปิดช่อง K⁺ ดู ต่างกันอย่างไร</li>
+      <li>เพิ่มจำนวนปั๊มทีละตัว แล้วดูกราฟ pH ว่าชันขึ้นแค่ไหน</li>
+      <li>รอจน pH ต่ำแล้วค่อยให้ยา PPI ลองเทียบกับการให้ยาตั้งแต่ตอน pH ยังสูง ผลต่างกันไหม เพราะอะไร</li>
+    </ol>
+
+    <h3>สามอย่างที่ควรลองเล่น</h3>
+    <ul>
+      <li><b>ปิดช่อง K⁺</b> — K⁺ ในลูเมนหมดภายในไม่กี่วินาที ปั๊มค้างอยู่ที่สถานะ E2 เพราะไม่มี K⁺ ให้จับ ปั๊มจะทำงานได้ก็ต่อเมื่อมีการรีไซเคิล K⁺ ออกไปที่ลูเมนก่อน</li>
+      <li><b>ตัด ATP</b> — ปั๊มจับ H⁺ ครบสองตัวแล้วค้างที่ E1 เพราะขาดพลังงานสำหรับการพลิกรูปร่าง</li>
+      <li><b>ให้ยา PPI</b> — ยาจะจับปั๊มได้เฉพาะตอนที่ช่องหันออกสู่ลูเมน (E2) และเฉพาะเมื่อลูเมนเป็นกรดพอ เพราะโอเมพราโซลเป็นโปรดรักที่ต้องถูกกรดกระตุ้นก่อน เมื่อจับแล้วจะจับแบบถาวร ปั๊มตัวนั้นจึงตายไปเลย ค่า pH จะค่อย ๆ ไต่กลับขึ้น ไม่ใช่ดีดขึ้นทันที — ตรงกับที่ยาต้องกินก่อนอาหารและออกฤทธิ์เต็มที่ในไม่กี่วัน</li>
+    </ul>
+
+    <h3>ข้อจำกัดของแบบจำลอง</h3>
+    <p>จำนวนอนุภาคบนจอเป็นเพียงตัวแทนเชิงสัญลักษณ์ ไม่ใช่จำนวนโมเลกุลจริง ค่า pH คำนวณจากสูตรที่ให้ H⁺ ทุก 10 อนุภาคเท่ากับ 1 หน่วย pH เพื่อให้เห็นความสัมพันธ์แบบลอการิทึม ของจริงกระเพาะสร้างความต่างของ H⁺ ได้ถึงราวหนึ่งล้านเท่าเมื่อเทียบกับในเซลล์ นอกจากนี้ยังไม่ได้วาดช่อง Cl⁻ ที่ต้องออกไปคู่กับ K⁺ เพื่อให้ได้ HCl</p>
+    <p>แต่ละขั้นในวัฏจักรถูกตั้งเวลาไว้คงที่เพื่อให้นับตามได้ เช่น ปั๊มจับ H⁺ แล้วรอ 2 วินาที ATP จึงเข้ามา และใช้เวลาอีก 2 วินาทีในการดัน H⁺ ออก ในเซลล์จริงแต่ละขั้นเป็นเหตุการณ์สุ่มที่เร็วกว่านี้มาก และจังหวะการปล่อย H⁺ จะช้าลงเรื่อย ๆ เมื่อลูเมนเป็นกรดจัด เพราะต้องดันสวนความชันที่สูงขึ้น จนในที่สุดพลังงานจาก ATP หนึ่งโมเลกุลไม่พออีกต่อไป</p>
+  </details>
+
+  <footer>บนคอมพิวเตอร์ใช้แป้นเว้นวรรคเพื่อเล่น/หยุด บนแท็บเล็ตแตะปุ่มเต็มจอเพื่อฉายให้ทั้งห้องดู — สร้างเพื่อการเรียนการสอน ได้แรงบันดาลใจจากรูปแบบของ PhET Interactive Simulations</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- โลกของการจำลอง ---------- */
+const W = 900, H = 560;
+const MEM_TOP = 240, MEM_BOT = 330;
+const LUMEN_TOP = 46, CYTO_BOT = H - 22;
+const R = 9;                      // รัศมีไอออน
+const PH_PER_10 = 10;             // H+ 10 ตัว = 1 หน่วย pH
+
+const cv = document.getElementById('stage');
+const ctx = cv.getContext('2d');
+const phc = document.getElementById('phchart');
+const pctx = phc.getContext('2d');
+
+let dpr = 1, scale = 1;
+function resize(){
+  const r = cv.parentElement.getBoundingClientRect();
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = Math.round(r.width * dpr);
+  cv.height = Math.round(r.height * dpr);
+  scale = (r.width / W) * dpr;
+  const r2 = phc.getBoundingClientRect();
+  phc.width = Math.round(r2.width * dpr);
+  phc.height = Math.round(r2.height * dpr);
+  draw();
+}
+window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', ()=>{ resize(); setTimeout(resize, 350); });
+if(window.visualViewport) window.visualViewport.addEventListener('resize', resize);
+document.addEventListener('fullscreenchange', ()=> setTimeout(resize, 120));
+document.addEventListener('webkitfullscreenchange', ()=> setTimeout(resize, 120));
+
+/* ---------- สถานะ ---------- */
+const S = {
+  running:true, speed:1,
+  pumps:[], chans:[], parts:[], atps:[], fx:[],
+  nPumps:0, nChans:0, atpLevel:0, ppi:0,
+  targetCH:0, totalK:0,
+  ca:true, wash:true, labels:true,
+  exported:0, atpUsed:0, rateBuf:[], rate:0, t:0,
+  phHist:[]
+};
+
+const rand = (a,b)=> a + Math.random()*(b-a);
+const clamp = (v,a,b)=> v<a?a:(v>b?b:v);
+const ease = t => t<.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2;
+
+function mkPart(type, side){
+  const y = side==='lumen' ? rand(LUMEN_TOP+R, MEM_TOP-R) : rand(MEM_BOT+R, CYTO_BOT-R);
+  const a = rand(0, Math.PI*2), sp = rand(35,70);
+  return {type, side, x:rand(30, W-30), y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, fade:1};
+}
+function mkPump(x){
+  return {x, a:-1, state:'E1', boundH:0, boundK:0, t:0, relT:0,
+          inhibited:false, drugT:0, waitATP:false, glow:0, reject:0, dwell:0,
+          hasATP:false, atpIncoming:false, phos:false, pT:0, adpDone:false};
+}
+
+function layout(){
+  const items = [];
+  const np = S.nPumps, nc = S.nChans, N = np + nc;
+  // สลับตำแหน่งปั๊มกับช่องให้กระจายทั่วเยื่อ
+  let pi=0, ci=0;
+  for(let i=0;i<N;i++){
+    const wantPump = (pi/Math.max(np,1)) <= (ci/Math.max(nc,1));
+    if((wantPump && pi<np) || ci>=nc){ items.push('p'); pi++; }
+    else { items.push('c'); ci++; }
+  }
+  const oldP = S.pumps.slice(), oldC = S.chans.slice();
+  S.pumps = []; S.chans = [];
+  items.forEach((kind,i)=>{
+    const x = W*(i+1)/(N+1);
+    if(kind==='p'){
+      const reuse = oldP.shift();
+      if(reuse){ reuse.x = x; S.pumps.push(reuse); } else S.pumps.push(mkPump(x));
+    }else{
+      const reuse = oldC.shift();
+      S.chans.push(reuse ? (reuse.x=x, reuse) : {x, glow:0});
+    }
+  });
+}
+
+function reset(){
+  S.parts = []; S.atps = []; S.fx = [];
+  for(let i=0;i<S.targetCH;i++) S.parts.push(mkPart('H','cyto'));
+  const kLum = Math.round(S.totalK*K_LUMEN_FRAC);
+  for(let i=0;i<kLum;i++) S.parts.push(mkPart('K','lumen'));
+  for(let i=0;i<S.totalK-kLum;i++) S.parts.push(mkPart('K','cyto'));
+  S.pumps = []; S.chans = []; layout();
+  S.pumps.forEach(p=>{ p.state='E1'; p.a=-1; p.boundH=0; p.boundK=0; p.inhibited=false; p.drugT=0;
+                       p.hasATP=false; p.atpIncoming=false; p.phos=false; p.pT=0; p.adpDone=false; p.dwell=0; });
+  S.exported=0; S.atpUsed=0; S.rateBuf=[]; S.rate=0; S.t=0; S.phHist=[];
+  syncATP(true);
+}
+
+function count(type, side){
+  let n=0;
+  for(const p of S.parts) if(p.type===type && p.side===side && p.fade>0.5) n++;
+  return n;
+}
+function lumenPH(){ return clamp(7.0 - count('H','lumen')/PH_PER_10, 0.8, 7.4); }
+
+function listOf(type, side){
+  return S.parts.filter(p=> p.type===type && p.side===side && p.fade===1);
+}
+function setCount(type, side, n){
+  const cur = listOf(type, side);
+  if(cur.length < n){ for(let i=cur.length;i<n;i++) S.parts.push(mkPart(type, side)); }
+  else for(let i=n;i<cur.length;i++) cur[i].fade = 0.99;
+}
+const K_LUMEN_FRAC = 0.3;   // สัดส่วน K⁺ ที่อยู่ฝั่งลูเมนเมื่อเพิ่มหรือลดไอออน
+
+function setTotalK(n){
+  const lum = listOf('K','lumen'), cyt = listOf('K','cyto');
+  let L = lum.length, C = cyt.length;
+  while(L + C < n){
+    // เติมลงทั้งสองฝั่ง โดยคุมสัดส่วนฝั่งลูเมนไว้ราวสามในสิบ
+    if(L < (L + C + 1) * K_LUMEN_FRAC){ S.parts.push(mkPart('K','lumen')); L++; }
+    else { S.parts.push(mkPart('K','cyto')); C++; }
+  }
+  while(L + C > n){
+    const fromLumen = L > (L + C) * K_LUMEN_FRAC;
+    const q = (fromLumen ? lum : cyt).pop() || (fromLumen ? cyt : lum).pop();
+    if(!q) break;
+    q.fade = 0.99;
+    if(q.side === 'lumen') L--; else C--;
+  }
+}
+
+function syncATP(fill){
+  const target = Math.round(S.atpLevel*20);
+  const free = S.atps.filter(a=> !a.used);
+  while(free.length > target){
+    const a = free.pop();
+    S.atps.splice(S.atps.indexOf(a), 1);
+  }
+  if(fill) while(S.atps.length < target) S.atps.push(mkATP());
+}
+function mkATP(){
+  const a = rand(0,Math.PI*2), sp = rand(20,45);
+  return {x:rand(30,W-30), y:rand(MEM_BOT+18, CYTO_BOT-14), vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, used:0, tx:0, ty:0, sx:0, sy:0};
+}
+
+/* ---------- การอัปเดต ---------- */
+function update(dt){
+  S.t += dt;
+
+  // อนุภาคเคลื่อนที่แบบสุ่ม
+  for(const p of S.parts){
+    if(p.fade < 1){ p.fade -= dt*2.2; continue; }
+    p.vx += rand(-60,60)*dt*4; p.vy += rand(-60,60)*dt*4;
+    const sp = Math.hypot(p.vx,p.vy), mx = 78;
+    if(sp > mx){ p.vx = p.vx/sp*mx; p.vy = p.vy/sp*mx; }
+    if(sp < 22){ p.vx *= 1.6; p.vy *= 1.6; }
+    p.x += p.vx*dt; p.y += p.vy*dt;
+    if(p.x < R){ p.x = R; p.vx = Math.abs(p.vx); }
+    if(p.x > W-R){ p.x = W-R; p.vx = -Math.abs(p.vx); }
+    if(p.side==='lumen'){
+      if(p.y < LUMEN_TOP+R){ p.y = LUMEN_TOP+R; p.vy = Math.abs(p.vy); }
+      if(p.y > MEM_TOP-R){ p.y = MEM_TOP-R; p.vy = -Math.abs(p.vy); }
+    }else{
+      if(p.y < MEM_BOT+R){ p.y = MEM_BOT+R; p.vy = Math.abs(p.vy); }
+      if(p.y > CYTO_BOT-R){ p.y = CYTO_BOT-R; p.vy = -Math.abs(p.vy); }
+    }
+  }
+  S.parts = S.parts.filter(p=> p.fade > 0);
+
+  // ATP ลอยในไซโทพลาซึม
+  for(const a of S.atps){
+    if(a.used){
+      a.used = Math.min(1, a.used + dt*3.2);
+      const t = ease(a.used);
+      a.x = a.sx + (a.tx-a.sx)*t; a.y = a.sy + (a.ty-a.sy)*t;
+      if(a.used >= 1 && a.pump){ a.pump.hasATP = true; a.pump.atpIncoming = false; a.pump.glow = 0.8; }
+      continue;
+    }
+    a.vx += rand(-40,40)*dt*4; a.vy += rand(-40,40)*dt*4;
+    const sp = Math.hypot(a.vx,a.vy);
+    if(sp>50){ a.vx=a.vx/sp*50; a.vy=a.vy/sp*50; }
+    a.x += a.vx*dt; a.y += a.vy*dt;
+    if(a.x<14){a.x=14;a.vx=Math.abs(a.vx);} if(a.x>W-14){a.x=W-14;a.vx=-Math.abs(a.vx);}
+    if(a.y<MEM_BOT+14){a.y=MEM_BOT+14;a.vy=Math.abs(a.vy);}
+    if(a.y>CYTO_BOT-12){a.y=CYTO_BOT-12;a.vy=-Math.abs(a.vy);}
+  }
+  S.atps = S.atps.filter(a=> a.used < 1);
+  if(S.atps.length < Math.round(S.atpLevel*20) && Math.random() < dt*3) S.atps.push(mkATP());
+
+  for(const p of S.pumps) updatePump(p, dt);
+  for(const c of S.chans) updateChannel(c, dt);
+
+  // คาร์บอนิกแอนไฮเดรสเติม H+ ให้ไซโทพลาซึม
+  if(S.ca){
+    const n = count('H','cyto');
+    if(n < S.targetCH && Math.random() < dt*(S.targetCH-n)*0.55){
+      const p = mkPart('H','cyto');
+      p.y = CYTO_BOT - 12; p.vy = -40;
+      S.parts.push(p);
+      S.fx.push({kind:'txt', x:p.x, y:p.y, s:'+HCO₃⁻', c:'#7C8F96', t:0, life:1.1});
+    }
+  }
+
+  // กรดถูกชะออกจากลูเมน
+  if(S.wash){
+    const n = count('H','lumen');
+    if(n > 0 && Math.random() < dt*n*0.013){
+      const cand = S.parts.filter(p=> p.type==='H' && p.side==='lumen' && p.fade===1);
+      if(cand.length) cand[Math.floor(Math.random()*cand.length)].fade = 0.99;
+    }
+  }
+  // เพดานจำนวน H⁺ ในลูเมน เพื่อไม่ให้ภาพแน่นจนดูไม่รู้เรื่อง (ต่ำกว่านี้ pH ก็ชนขีดจำกัดแล้ว)
+  {
+    const extra = listOf('H','lumen');
+    for(let i = 86; i < extra.length; i++) extra[i].fade = 0.99;
+  }
+
+  // อัตราการปั๊ม (เฉลี่ย 3 วินาทีล่าสุด)
+  S.rateBuf = S.rateBuf.filter(t=> S.t - t < 3);
+  S.rate = S.rateBuf.length / 3;
+
+  for(const f of S.fx){ f.t += dt; f.y -= dt*22; f.x += (f.vx||0)*dt; }
+  S.fx = S.fx.filter(f=> f.t < f.life);
+
+  // เก็บกราฟ pH
+  if(!S.phHist.length || S.t - S.phHist[S.phHist.length-1].t > 0.2){
+    S.phHist.push({t:S.t, ph:lumenPH()});
+    if(S.phHist.length > 300) S.phHist.shift();
+  }
+}
+
+// เวลาที่ใช้ดัน H⁺ ออกสู่ลูเมน คงที่ 2 วินาทีเสมอ ไม่ขึ้นกับความชันของกรด
+function releaseDelay(){ return 2.0; }
+
+function updatePump(p, dt){
+  p.glow = Math.max(0, p.glow - dt*1.8);
+  p.reject = Math.max(0, p.reject - dt*1.6);
+  if(p.inhibited){ p.drugT = Math.min(1, p.drugT + dt*3); return; }
+
+  // ยา PPI จับได้เฉพาะตอนหันออกสู่ลูเมน และต้องมีกรดกระตุ้น
+  if(S.ppi > 0 && (p.state==='relH' || p.state==='E2' || p.state==='dephos')){
+    const ph = lumenPH();
+    const acid = clamp((4 - ph)/3, 0, 1);
+    if(Math.random() < S.ppi*acid*0.55*dt){
+      p.inhibited = true;
+      S.fx.push({kind:'txt', x:p.x, y:MEM_TOP-20, s:'ปั๊มถูกปิดถาวร', c:'#8E44AD', t:0, life:1.8});
+      return;
+    }
+  }
+
+  switch(p.state){
+    case 'E1': {
+      p.a = -1;
+      capture(p, 'H', 'cyto', dt);
+      if(p.boundH >= 1){
+        p.dwell += dt;
+        if(p.hasATP){ p.state = 'phos'; p.t = 0; p.pT = 0; p.adpDone = false; p.waitATP = false; p.dwell = 0; }
+        else if(p.dwell > 2 && !p.atpIncoming){
+          const atp = nearestATP(p.x);
+          if(atp){
+            atp.used = 0.001; atp.sx = atp.x; atp.sy = atp.y;
+            atp.tx = p.x + 38; atp.ty = 358; atp.pump = p;
+            p.atpIncoming = true; p.waitATP = false; S.atpUsed++;
+          } else p.waitATP = true;
+        }
+      } else p.dwell = 0;
+      break;
+    }
+    case 'phos':
+      p.t += dt;
+      p.glow = Math.max(p.glow, 0.55);
+      if(p.t > 0.4 && !p.adpDone){
+        p.adpDone = true; p.hasATP = false; p.phos = true; p.pT = 0;
+        S.fx.push({kind:'badge', x:p.x+50, y:372, s:'ADP', c:'#F0A32E', vx:34, t:0, life:1.7});
+      }
+      if(p.adpDone) p.pT = Math.min(1, p.pT + dt*2.4);
+      if(p.t > 1.0){ p.state = 'flipUp'; p.t = 0; }
+      break;
+    case 'flipUp':
+      p.t += dt; p.glow = 1;
+      p.a = -1 + 2*ease(clamp(p.t/0.55,0,1));
+      if(p.t >= 0.55){ p.a = 1; p.state = 'relH'; p.t = 0; p.relT = 0; }
+      break;
+    case 'relH':
+      p.relT += dt;
+      if(p.relT >= releaseDelay()){
+        p.relT = 0;
+        p.boundH--;
+        const q = mkPart('H','lumen');
+        q.x = p.x + rand(-10,10); q.y = MEM_TOP - R - 2; q.vy = -45;
+        S.parts.push(q);
+        S.exported++; S.rateBuf.push(S.t);
+      }
+      if(p.boundH <= 0){ p.state = 'E2'; }
+      break;
+    case 'E2':
+      p.a = 1;
+      capture(p, 'K', 'lumen', dt);
+      if(p.boundK >= 1){ p.state = 'dephos'; p.t = 0; }
+      break;
+    case 'dephos':
+      p.t += dt;
+      p.glow = Math.max(p.glow, 0.55);
+      if(p.t > 0.3 && p.phos){
+        p.phos = false;
+        S.fx.push({kind:'badge', x:p.x-40, y:344, s:'Pi', c:'#F0A32E', vx:-30, t:0, life:1.6});
+      }
+      if(p.t > 0.6){ p.state = 'flipDown'; p.t = 0; }
+      break;
+    case 'flipDown':
+      p.t += dt; p.glow = 1;
+      p.a = 1 - 2*ease(clamp(p.t/0.55,0,1));
+      if(p.t >= 0.55){ p.a = -1; p.state = 'relK'; p.t = 0; p.relT = 0; }
+      break;
+    case 'relK':
+      p.relT += dt;
+      if(p.relT > 0.16){
+        p.relT = 0; p.boundK--;
+        const q = mkPart('K','cyto');
+        q.x = p.x + rand(-10,10); q.y = MEM_BOT + R + 2; q.vy = 45;
+        S.parts.push(q);
+      }
+      if(p.boundK <= 0){ p.state = 'E1'; p.waitATP = false; }
+      break;
+  }
+}
+
+function capture(p, type, side, dt){
+  const need = type==='H' ? 1 - p.boundH : 1 - p.boundK;
+  const other = type==='H' ? 'K' : 'H';
+  const mouthY = side==='cyto' ? MEM_BOT + 12 : MEM_TOP - 12;
+  for(const q of S.parts){
+    if(q.fade < 1 || q.side !== side) continue;
+    const dx = q.x - p.x, dy = q.y - mouthY;
+
+    if(q.type === type && need > 0){
+      // ไอออนที่รูปร่างเข้ากับช่องจับจะถูกดึงเข้าหาปาก จึงไม่ต้องรอให้ชนโดยบังเอิญ
+      const d = Math.hypot(dx, dy);
+      if(d < 120 && d > 1){
+        const acc = 175 * (1 - d/120) * dt;
+        q.vx -= dx/d * acc; q.vy -= dy/d * acc;
+      }
+      const near = side==='cyto' ? (q.y < MEM_BOT + 26) : (q.y > MEM_TOP - 26);
+      if(Math.abs(dx) < 22 && near){
+        q.fade = 0;
+        if(type==='H') p.boundH++; else p.boundK++;
+        return;
+      }
+      continue;
+    }
+
+    if(q.type === other){
+      const near = side==='cyto' ? (q.y < MEM_BOT + 26) : (q.y > MEM_TOP - 26);
+      if(Math.abs(dx) < 21 && near){
+        // รูปร่างไม่พอดีกับช่องจับ จึงถูกดีดกลับ
+        q.vx += (dx >= 0 ? 1 : -1) * 55;
+        q.vy += (side==='cyto' ? 70 : -70);
+        p.reject = 0.7;
+      }
+    }
+  }
+}
+function nearestATP(x){
+  let best=null, bd=1e9;
+  for(const a of S.atps){ if(a.used) continue; const d=Math.abs(a.x-x); if(d<bd){bd=d;best=a;} }
+  return best;
+}
+
+function updateChannel(c, dt){
+  c.glow = Math.max(0, c.glow - dt*2.5);
+  for(const q of S.parts){
+    if(q.type!=='K' || q.fade<1) continue;
+    if(Math.abs(q.x - c.x) > 13) continue;
+    if(q.side==='cyto' && q.y < MEM_BOT + 16 && Math.random() < 0.55){
+      q.side='lumen'; q.y = MEM_TOP - R - 2; q.vy = -40; c.glow = 1;
+    } else if(q.side==='lumen' && q.y > MEM_TOP - 16 && Math.random() < 0.55){
+      q.side='cyto'; q.y = MEM_BOT + R + 2; q.vy = 40; c.glow = 1;
+    }
+  }
+}
+
+/* ---------- การวาด ---------- */
+function draw(){
+  const ph = lumenPH();
+  ctx.setTransform(scale,0,0,scale,0,0);
+  ctx.clearRect(0,0,W,H);
+
+  // ลูเมน: ยิ่งเป็นกรดยิ่งอมส้มแดง
+  const acid = clamp((7 - ph)/6, 0, 1);
+  const g = ctx.createLinearGradient(0,0,0,MEM_TOP);
+  g.addColorStop(0, mix('#FEF7EC', '#F6C6A8', acid));
+  g.addColorStop(1, mix('#FDF1DE', '#EE9E7B', acid));
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,MEM_TOP);
+  ctx.fillStyle = '#DFEFEC'; ctx.fillRect(0,MEM_BOT,W,H-MEM_BOT);
+
+  ctx.font = '600 15px system-ui, sans-serif';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = 'rgba(120,60,30,.72)';
+  ctx.fillText('GASTRIC LUMEN   pH ' + ph.toFixed(1), 16, 27);
+  ctx.fillStyle = 'rgba(25,90,85,.72)';
+  ctx.fillText('PARIETAL CELL CYTOPLASM   pH 7.2', 16, H-8);
+
+  drawMembrane();
+  for(const p of S.parts) drawIon(p);
+  for(const a of S.atps) drawATP(a);
+  for(const c of S.chans) drawChannel(c);
+  for(const p of S.pumps) drawPump(p);
+
+  ctx.textAlign = 'center';
+  for(const f of S.fx){
+    ctx.globalAlpha = clamp(1 - f.t/f.life, 0, 1);
+    if(f.kind === 'badge'){
+      const w = f.s.length > 2 ? 28 : 20;
+      roundRect(f.x - w/2, f.y - 9, w, 18, 6);
+      ctx.fillStyle = f.c; ctx.fill();
+      ctx.strokeStyle = '#C67F12'; ctx.lineWidth = 1.6; ctx.stroke();
+      ctx.fillStyle = '#4A3208'; ctx.font = '700 10px system-ui, sans-serif';
+      ctx.textBaseline = 'middle'; ctx.fillText(f.s, f.x, f.y + .5); ctx.textBaseline = 'alphabetic';
+    }else{
+      ctx.fillStyle = f.c; ctx.font = '600 13px system-ui, sans-serif';
+      ctx.fillText(f.s, f.x, f.y);
+    }
+    ctx.globalAlpha = 1;
+  }
+  drawPhChart();
+}
+
+function mix(a,b,t){
+  const pa = [1,3,5].map(i=>parseInt(a.substr(i,2),16));
+  const pb = [1,3,5].map(i=>parseInt(b.substr(i,2),16));
+  return 'rgb(' + pa.map((v,i)=> Math.round(v+(pb[i]-v)*t)).join(',') + ')';
+}
+
+function drawMembrane(){
+  ctx.fillStyle = '#F6E3B8'; ctx.fillRect(0, MEM_TOP, W, MEM_BOT-MEM_TOP);
+  const step = 19;
+  for(let x = step/2; x < W; x += step){
+    // หางไขมัน
+    ctx.strokeStyle = '#E3C27E'; ctx.lineWidth = 2.6; ctx.lineCap = 'round';
+    for(const dir of [1,-1]){
+      const y0 = dir===1 ? MEM_TOP+17 : MEM_BOT-17;
+      const y1 = dir===1 ? MEM_TOP+43 : MEM_BOT-43;
+      for(const off of [-3.2, 3.2]){
+        ctx.beginPath();
+        ctx.moveTo(x+off, y0);
+        ctx.quadraticCurveTo(x+off+dir*4.5, (y0+y1)/2, x+off, y1);
+        ctx.stroke();
+      }
+    }
+    // หัวมีขั้ว
+    for(const y of [MEM_TOP+9, MEM_BOT-9]){
+      ctx.beginPath(); ctx.arc(x, y, 8.4, 0, 6.2832);
+      ctx.fillStyle = '#F0C048'; ctx.fill();
+      ctx.strokeStyle = '#D9A425'; ctx.lineWidth = 1.6; ctx.stroke();
+    }
+  }
+}
+
+function ionPath(x, y, type, s){
+  ctx.beginPath();
+  if(type === 'H'){ ctx.arc(x, y, s, 0, 6.2832); return; }
+  const r = s*1.34;
+  for(let i=0;i<3;i++){
+    const ang = -Math.PI/2 + i*2.0944;
+    const X = x + Math.cos(ang)*r, Y = y + Math.sin(ang)*r + s*0.17;
+    i ? ctx.lineTo(X,Y) : ctx.moveTo(X,Y);
+  }
+  ctx.closePath();
+}
+
+function drawIon(p){
+  const isH = p.type === 'H';
+  const col = isH ? '#E23B2E' : '#6C4BC7';
+  const dark = isH ? '#A9251B' : '#4A2E97';
+  ctx.globalAlpha = clamp(p.fade,0,1);
+  ionPath(p.x, p.y, p.type, R);
+  ctx.fillStyle = col; ctx.fill();
+  ctx.lineWidth = 1.8; ctx.lineJoin = 'round'; ctx.strokeStyle = dark; ctx.stroke();
+  if(isH){
+    ctx.beginPath(); ctx.arc(p.x-3, p.y-3.4, 2.6, 0, 6.2832);
+    ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fill();
+  }
+  ctx.fillStyle = '#fff'; ctx.font = '700 10px system-ui, sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(isH ? 'H' : 'K', p.x, isH ? p.y+.5 : p.y+4);
+  ctx.textBaseline='alphabetic';
+  ctx.globalAlpha = 1;
+}
+
+// ช่องจับของโปรตีน: วงกลมตอนรับ H⁺ สามเหลี่ยมตอนรับ K⁺
+function drawSocket(cx, cy, a, reject){
+  const rj = reject > 0;
+  ctx.save();
+  ctx.setLineDash([4.5,3.5]); ctx.lineWidth = 2.3; ctx.lineJoin = 'round';
+  ctx.strokeStyle = rj ? '#E23B2E' : '#17786D';
+  const cAl = clamp((1-a)/2, 0, 1), tAl = clamp((1+a)/2, 0, 1);
+  if(cAl > 0.03){
+    ctx.globalAlpha = cAl * (rj ? 1 : 0.8);
+    ctx.beginPath(); ctx.arc(cx, cy, 12.5, 0, 6.2832); ctx.stroke();
+  }
+  if(tAl > 0.03){
+    ctx.globalAlpha = tAl * (rj ? 1 : 0.8);
+    ionPath(cx, cy, 'K', 12.5); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawATP(a){
+  ctx.globalAlpha = a.used ? clamp(1.6 - a.used*1.6, 0, 1) : 0.95;
+  roundRect(a.x-13, a.y-8, 26, 16, 6);
+  ctx.fillStyle = '#F0A32E'; ctx.fill();
+  ctx.strokeStyle = '#C67F12'; ctx.lineWidth = 1.6; ctx.stroke();
+  ctx.fillStyle = '#4A3208'; ctx.font = '700 9.5px system-ui, sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('ATP', a.x, a.y+.5);
+  ctx.textBaseline='alphabetic'; ctx.globalAlpha = 1;
+}
+
+function roundRect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+}
+
+function drawChannel(c){
+  const x = c.x, top = MEM_TOP-8, bot = MEM_BOT+8;
+  const lobe = 13, gap = 20;
+  ctx.fillStyle = c.glow>0 ? '#6FA8E0' : '#3D7FC1';
+  ctx.strokeStyle = '#2A5C90'; ctx.lineWidth = 2;
+  for(const s of [-1,1]){
+    ctx.beginPath();
+    const inner = x + s*gap/2, outer = inner + s*lobe;
+    ctx.moveTo(inner, top); ctx.lineTo(outer, top);
+    ctx.quadraticCurveTo(outer + s*3, (top+bot)/2, outer, bot);
+    ctx.lineTo(inner, bot);
+    ctx.quadraticCurveTo(inner - s*2, (top+bot)/2, inner, top);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+  // ตัวกรองที่ยอมให้เฉพาะรูปสามเหลี่ยมผ่าน
+  ctx.save();
+  ctx.setLineDash([3.5,3]); ctx.lineWidth = 2; ctx.lineJoin = 'round';
+  ctx.globalAlpha = c.glow > 0 ? 1 : 0.7;
+  ctx.strokeStyle = '#2A5C90';
+  ionPath(x, (top+bot)/2, 'K', 8.5); ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle = '#2A5C90'; ctx.font = '700 10px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('K⁺', x, bot + 15);
+}
+
+function drawPump(p){
+  const x = p.x, top = MEM_TOP-14, bot = MEM_BOT+14;
+  const a = p.a;                       // -1 = เปิดลงล่าง, +1 = เปิดขึ้นบน
+  const topGap = 6 + 22*(a+1)/2;
+  const botGap = 6 + 22*(1-a)/2;
+  const lobe = 22;
+  const on = !p.inhibited;
+  const base = on ? (p.glow>0.5 ? '#2FB6A5' : '#1F9E8F') : '#9AA3A8';
+  const edge = on ? '#13786C' : '#78848A';
+
+  // แสงเรืองตอนโปรตีนกำลังเปลี่ยนรูปร่าง
+  if(on && p.glow > 0){
+    ctx.globalAlpha = 0.3*p.glow;
+    ctx.fillStyle = '#6FE0D0';
+    ctx.beginPath(); ctx.ellipse(x, 300, 62, 92, 0, 0, 6.2832); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  // โดเมนในไซโทพลาซึมที่จับ ATP — เอียงตามการเปลี่ยนรูปร่าง
+  ctx.save();
+  ctx.translate(x + 14, 342);
+  ctx.rotate(0.22*a);
+  ctx.strokeStyle = edge; ctx.lineWidth = 8; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(0,-2); ctx.lineTo(13, 9); ctx.stroke();
+  roundRect(-2, 2, 50, 34, 13);
+  ctx.fillStyle = base; ctx.fill();
+  ctx.strokeStyle = edge; ctx.lineWidth = 2.2; ctx.stroke();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  if(on && p.hasATP){
+    roundRect(10, 11, 27, 17, 6);
+    ctx.fillStyle = '#F0A32E'; ctx.fill();
+    ctx.strokeStyle = '#C67F12'; ctx.lineWidth = 1.7; ctx.stroke();
+    ctx.fillStyle = '#4A3208'; ctx.font = '700 9.5px system-ui, sans-serif';
+    ctx.fillText('ATP', 23.5, 20);
+  }else if(on){
+    const pulse = (p.state==='E1' && p.boundH>0) ? 0.45 + 0.45*Math.sin(S.t*7) : 0.35;
+    ctx.globalAlpha = pulse;
+    ctx.setLineDash([4,3]); ctx.strokeStyle = '#FDEBC9'; ctx.lineWidth = 2;
+    roundRect(10, 11, 27, 17, 6); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+  }
+  ctx.textBaseline = 'alphabetic';
+  ctx.restore();
+
+  // ช่องว่างตรงกลางเพื่อให้เห็นไอออนที่จับอยู่
+  ctx.fillStyle = on ? 'rgba(205,238,233,.9)' : 'rgba(226,230,232,.9)';
+  ctx.beginPath();
+  ctx.moveTo(x-topGap/2, top); ctx.lineTo(x+topGap/2, top);
+  ctx.lineTo(x+botGap/2, bot); ctx.lineTo(x-botGap/2, bot); ctx.closePath(); ctx.fill();
+
+  for(const s of [-1,1]){
+    const ti = x + s*topGap/2, bi = x + s*botGap/2;
+    ctx.beginPath();
+    ctx.moveTo(ti, top);
+    ctx.lineTo(ti + s*lobe, top);
+    ctx.quadraticCurveTo(ti + s*(lobe+5), (top+bot)/2, bi + s*lobe, bot);
+    ctx.lineTo(bi, bot);
+    ctx.quadraticCurveTo(bi + s*1.5, (top+bot)/2, ti, top);
+    ctx.closePath();
+    ctx.fillStyle = base; ctx.fill();
+    ctx.strokeStyle = edge; ctx.lineWidth = 2.2; ctx.stroke();
+  }
+
+  // ไอออนที่ถูกจับไว้ภายใน (หนึ่งตัวต่อหนึ่งรอบ)
+  const cy = 285;
+  const iy = cy + (a<0 ? 10 : -10);
+  if(on && p.boundH === 0 && p.boundK === 0) drawSocket(x, iy, a, p.reject);
+  if(p.boundH > 0) drawIon({x:x, y:iy, type:'H', fade:1});
+  if(p.boundK > 0) drawIon({x:x, y:iy, type:'K', fade:1});
+
+  // หมู่ฟอสเฟต: เดินทางจากตำแหน่ง ATP เข้าไปเกาะที่แกนโปรตีน แล้วอยู่จนกว่าจะปลด
+  if(on && p.phos){
+    const t = ease(clamp(p.pT,0,1));
+    const px = (x+38) + (x-30 - (x+38))*t;
+    const py = 358 + (302-358)*t;
+    ctx.beginPath(); ctx.arc(px, py, 8, 0, 6.2832);
+    ctx.fillStyle = '#F0A32E'; ctx.fill();
+    ctx.strokeStyle = '#C67F12'; ctx.lineWidth = 1.6; ctx.stroke();
+    ctx.fillStyle = '#4A3208'; ctx.font = '700 9px system-ui, sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('P', px, py+.5); ctx.textBaseline='alphabetic';
+  }
+
+  // ยา PPI ที่จับแบบถาวร
+  if(p.inhibited){
+    const k = ease(p.drugT);
+    ctx.globalAlpha = k;
+    ctx.beginPath(); ctx.arc(x, MEM_TOP + 6, 11, 0, 6.2832);
+    ctx.fillStyle = '#8E44AD'; ctx.fill();
+    ctx.strokeStyle = '#5E2A75'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.font = '700 10px system-ui, sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('PPI', x, MEM_TOP+6.5); ctx.textBaseline='alphabetic';
+    ctx.globalAlpha = 1;
+  }
+
+  if(S.labels){
+    let tag;
+    if(p.inhibited) tag = 'ถูกยับยั้ง';
+    else switch(p.state){
+      case 'E1':       tag = p.waitATP ? 'E1 · รอ ATP'
+                           : p.atpIncoming ? 'ATP กำลังเข้าจับ'
+                           : p.boundH > 0 ? 'E1 · จับ H⁺ ไว้แล้ว'
+                           : 'E1'; break;
+      case 'phos':     tag = 'ATP → ADP + P'; break;
+      case 'flipUp':   tag = 'E1-P เปลี่ยนรูปเป็น E2-P'; break;
+      case 'relH':     tag = 'E2-P · ปล่อย H⁺'; break;
+      case 'E2':       tag = 'E2-P · รอ K⁺'; break;
+      case 'dephos':   tag = 'ปลด P ออก'; break;
+      case 'flipDown': tag = 'E2 เปลี่ยนรูปกลับเป็น E1'; break;
+      default:         tag = 'E1 · ปล่อย K⁺';
+    }
+    ctx.font = '600 12px system-ui, sans-serif'; ctx.textAlign='center';
+    const w = ctx.measureText(tag).width + 14;
+    const ly = bot + 44;
+    ctx.fillStyle = 'rgba(255,255,255,.9)';
+    roundRect(x - w/2, ly, w, 20, 9); ctx.fill();
+    ctx.strokeStyle = on ? '#BFD8D4' : '#D2D7D9'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = on ? '#116156' : '#6B7679';
+    ctx.textBaseline='middle'; ctx.fillText(tag, x, ly + 10.5); ctx.textBaseline='alphabetic';
+  }
+}
+
+function drawPhChart(){
+  const w = phc.width, h = phc.height, s = dpr;
+  pctx.setTransform(1,0,0,1,0,0);
+  pctx.clearRect(0,0,w,h);
+  const pad = 4*s;
+  const toY = ph => pad + (7.4 - ph)/(7.4-0.8) * (h - 2*pad);
+  pctx.strokeStyle = '#EAF0F1'; pctx.lineWidth = 1*s;
+  for(const v of [1,3,5,7]){
+    pctx.beginPath(); pctx.moveTo(0, toY(v)); pctx.lineTo(w, toY(v)); pctx.stroke();
+  }
+  if(S.phHist.length > 1){
+    const t1 = S.phHist[S.phHist.length-1].t, t0 = Math.max(0, t1 - 60);
+    const toX = t => (t - t0)/Math.max(60, t1-t0) * w;
+    pctx.beginPath();
+    S.phHist.forEach((d,i)=>{
+      if(d.t < t0) return;
+      const X = toX(d.t), Y = toY(d.ph);
+      i===0 ? pctx.moveTo(X,Y) : pctx.lineTo(X,Y);
+    });
+    pctx.strokeStyle = '#E23B2E'; pctx.lineWidth = 2.2*s; pctx.lineJoin='round';
+    pctx.stroke();
+  }
+  pctx.fillStyle = '#84969B'; pctx.font = (10*s)+'px system-ui, sans-serif';
+  pctx.fillText('pH ในลูเมน · 60 วินาทีล่าสุด', 6*s, 13*s);
+}
+
+/* ---------- การเชื่อมกับส่วนควบคุม ---------- */
+const el = id => document.getElementById(id);
+function syncUI(){
+  const ph = lumenPH();
+  el('phVal').textContent = ph.toFixed(1);
+  el('phMark').style.left = clamp((ph-1)/6, 0, 1)*100 + '%';
+  el('phNote').textContent =
+    ph < 1.6 ? 'กรดเข้มข้นเทียบเท่ากระเพาะขณะย่อยอาหาร' :
+    ph < 3.2 ? 'เป็นกรดพอที่จะกระตุ้นเพปซิโนเจน' :
+    ph < 5.2 ? 'กรดอ่อน เอนไซม์ย่อยโปรตีนทำงานได้ไม่ดี' :
+               'แทบเป็นกลาง ปั๊มยังทำงานไม่มากพอ';
+
+  const vals = {LH:count('H','lumen'), CH:count('H','cyto'), LK:count('K','lumen'), CK:count('K','cyto')};
+  for(const k in vals){
+    el('n'+k).textContent = vals[k];
+    el('b'+k).style.width = clamp(vals[k]/70,0,1)*100 + '%';
+  }
+  if(!lhDrag){
+    el('sLH').value = clamp(vals.LH, 0, 70);
+    el('vLH').textContent = vals.LH;
+  }
+  el('sRate').textContent = S.rate.toFixed(1);
+  el('sAtpUsed').textContent = S.atpUsed;
+  el('sTotal').textContent = S.exported;
+  const blocked = S.pumps.filter(p=>p.inhibited).length;
+  el('sBlocked').textContent = blocked + ' / ' + S.pumps.length;
+
+  const a = el('alert');
+  const empty = S.parts.length === 0 && S.pumps.length === 0 && S.chans.length === 0;
+  el('hint').classList.toggle('show', empty);
+  let msg = '';
+  if(empty) msg = '';
+  else if(S.nPumps === 0) msg = 'ยังไม่มีปั๊มอยู่บนเยื่อ H⁺ จึงข้ามไปฝั่งลูเมนไม่ได้เลย';
+  else if(blocked === S.pumps.length && blocked > 0) msg = 'ปั๊มทุกตัวถูกยา PPI จับถาวรแล้ว การหลั่งกรดหยุดลง จนกว่าเซลล์จะสร้างปั๊มใหม่';
+  else if(S.atpLevel === 0) msg = 'ไม่มี ATP ปั๊มจับ H⁺ ไว้แล้วค้างอยู่ที่สถานะ E1 พลิกรูปร่างต่อไม่ได้';
+  else if(S.nChans === 0 && count('K','lumen') < 3) msg = 'K⁺ ในลูเมนหมด ปั๊มค้างที่ E2 เพราะไม่มี K⁺ ให้แลกกลับเข้าเซลล์';
+  else if(lumenPH() < 1.05) msg = 'ลูเมนเป็นกรดจัดระดับเดียวกับกระเพาะขณะย่อยอาหารแล้ว ในเซลล์จริงความชันระดับนี้จะทำให้ปั๊มช้าลงจนเกือบหยุด แต่ในแบบจำลองนี้ตั้งจังหวะไว้คงที่';
+  a.textContent = msg; a.classList.toggle('show', !!msg);
+}
+
+function bindRange(id, out, fn, fmt){
+  const s = el(id);
+  const apply = ()=>{ const v = +s.value; el(out).textContent = fmt(v); fn(v); };
+  s.addEventListener('input', apply); apply();
+}
+bindRange('sPumps','vPumps', v=>{ S.nPumps=v; layout(); }, v=>v);
+bindRange('sChans','vChans', v=>{ S.nChans=v; layout(); }, v=>v);
+bindRange('sAtp','vAtp', v=>{ S.atpLevel=v/100; syncATP(false); }, v=>v+'%');
+bindRange('sPpi','vPpi', v=>{ S.ppi=v/100; }, v=>v+'%');
+bindRange('sSpeed','vSpeed', v=>{ S.speed=v/100; }, v=>(v/100).toFixed(2).replace(/0$/,'')+'×');
+
+let lhDrag = false;
+const lhSlider = el('sLH');
+['pointerdown','touchstart','focus','keydown'].forEach(ev=> lhSlider.addEventListener(ev, ()=> lhDrag = true));
+['pointerup','pointercancel','touchend','blur','keyup'].forEach(ev=> lhSlider.addEventListener(ev, ()=> lhDrag = false));
+bindRange('sCH','vCH', v=>{ S.targetCH=v; setCount('H','cyto',v); }, v=>v);
+bindRange('sLH','vLH', v=>{ setCount('H','lumen',v); }, v=>v);
+bindRange('sK','vK',  v=>{ S.totalK=v; setTotalK(v); }, v=>v);
+
+el('cCA').addEventListener('change', e=> S.ca = e.target.checked);
+el('cWash').addEventListener('change', e=> S.wash = e.target.checked);
+el('cLabels').addEventListener('change', e=> S.labels = e.target.checked);
+
+const playBtn = el('play');
+function setRunning(r){ S.running = r; playBtn.textContent = r ? 'หยุดชั่วคราว' : 'เล่นต่อ'; }
+playBtn.addEventListener('click', ()=> setRunning(!S.running));
+el('step').addEventListener('click', ()=>{ setRunning(false); update(1/30); draw(); syncUI(); });
+el('reset').addEventListener('click', ()=>{ reset(); setRunning(true); draw(); syncUI(); });
+window.addEventListener('keydown', e=>{
+  if(e.code==='Space' && !/INPUT|BUTTON/.test(e.target.tagName)){ e.preventDefault(); setRunning(!S.running); }
+});
+
+// เต็มจอ — แสดงปุ่มเฉพาะเบราว์เซอร์ที่รองรับ (Safari บน iPad รองรับ ส่วน iPhone ไม่รองรับ)
+const stageEl = document.querySelector('.stage');
+const enterFS = stageEl.requestFullscreen || stageEl.webkitRequestFullscreen;
+if(enterFS){
+  const fsBtn = el('fs');
+  fsBtn.hidden = false;
+  fsBtn.addEventListener('click', ()=>{
+    const d = document;
+    const active = d.fullscreenElement || d.webkitFullscreenElement;
+    if(active){ (d.exitFullscreen || d.webkitExitFullscreen).call(d); fsBtn.textContent = 'เต็มจอ'; }
+    else { enterFS.call(stageEl); fsBtn.textContent = 'ออกจากเต็มจอ'; }
+    setTimeout(resize, 200);
+  });
+}
+
+const PRESETS = {
+  empty:  {pumps:0, chans:0, atp:0,  ppi:0,  ch:0,  lh:0, k:0},
+  normal: {pumps:3, chans:2, atp:80, ppi:0,  ch:26, lh:4, k:62},
+  nok:    {pumps:3, chans:0, atp:80, ppi:0,  ch:26, lh:4, k:62},
+  ppi:    {pumps:4, chans:2, atp:80, ppi:60, ch:26, lh:4, k:62},
+  noatp:  {pumps:3, chans:2, atp:0,  ppi:0,  ch:26, lh:4, k:62}
+};
+document.querySelectorAll('[data-preset]').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    const set = (id,v)=>{ el(id).value = v; el(id).dispatchEvent(new Event('input')); };
+    const c = PRESETS[b.dataset.preset];
+    reset();
+    set('sPumps', c.pumps); set('sChans', c.chans); set('sAtp', c.atp); set('sPpi', c.ppi);
+    set('sCH', c.ch); set('sLH', c.lh); set('sK', c.k);
+    document.querySelectorAll('[data-preset]').forEach(o=> o.setAttribute('aria-pressed', o===b ? 'true':'false'));
+    setRunning(true);
+  });
+});
+
+/* ---------- ลูปหลัก ---------- */
+let last = performance.now(), acc = 0, uiAcc = 0;
+function frame(now){
+  let dt = (now - last)/1000; last = now;
+  dt = Math.min(dt, 0.05);
+  if(S.running){
+    acc += dt * S.speed;
+    while(acc > 1/120){ update(1/120); acc -= 1/120; }
+  }
+  draw();
+  uiAcc += dt;
+  if(uiAcc > 0.12){ uiAcc = 0; syncUI(); }
+  requestAnimationFrame(frame);
+}
+
+reset();
+resize();
+syncUI();
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
